@@ -1,27 +1,29 @@
-let withField = document.getElementById("matrixWidth");
+let widthField = document.getElementById("matrixWidth");
 let heightField = document.getElementById("matrixHeight");
 let visual = document.getElementById("visual");
-let maker = document.getElementById("makeMatrix");
+let maker = document.getElementById("createMatrix");
 let send = document.getElementById("send");
 let matrix = [];
 
-const makeRow = (width) => {
-    let fil = [];
+const createRow = (width) => {
+    let row = [];
     for (let i = 0; i < width; i++) {
-        fil.push(0);
+        row.push(0);
     }
-    return fil;
+
+    return row;
 };
 
-const makeMatrix = (height, width) => {
+const createMatrix = (height, width) => {
     for (let i = 0; i < height; i++) {
-        let newRow = makeRow(width);
+        let newRow = createRow(width);
         matrix.push(newRow);
     }
+
     return matrix;
 };
 
-const displayMatriz = (mat) => {
+const displayMatrix = (mat) => {
     for (let i = 0; i < mat.length; i++) {
         let visualRow = document.createElement("div");
         visualRow.classList.add("newRow");
@@ -36,15 +38,19 @@ const displayMatriz = (mat) => {
     }
 };
 
+const clearMatrixValues = () => {
+    widthField.value = null;
+    heightField.value = null;
+};
+
 const display = () => {
     visual.innerHTML = null;
-    let an = withField.value;
+    let an = widthField.value;
     let al = heightField.value;
-    matrix = makeMatrix(al, an);
-    displayMatriz(matrix);
+    matrix = createMatrix(al, an);
+    displayMatrix(matrix);
     matrix = [];
-    withField.value = null;
-    heightField.value = null;
+    clearMatrixValues();
 };
 
 const makePayload = () => {
@@ -67,26 +73,60 @@ const makePayload = () => {
     return payload;
 };
 
-const getRow = (data, item) => {
+const getRow = (data, index) => {
     let row = data.filter((square) => {
-        return square.row == item.row;
+        return square.row == index;
     });
 
     return row;
 };
 
+const respToArray = (resp) => {
+    let result = [];
+    let ind = 0;
+    let currentRow = [];
+    do {
+        currentRow = getRow(resp, ind);
+        result.push(currentRow);
+        ind++;
+    } while (currentRow[0]);
+    result.pop();
+
+    return result;
+};
+
 const displaySolution = (resp) => {
-    /// convertir cada array en una fila de divs ///
+    let matrixArray = respToArray(resp);
+    let result = document.getElementById("result");
+    result.classList.add("solution");
+    matrixArray.map((row) => {
+        let newRow = document.createElement("div");
+        newRow.classList.add("solutionRow");
+        row.map((square) => {
+            let newElem = document.createElement("div");
+            newElem.classList.add("square");
+            if (square.isWall) {
+                newElem.classList.add("wall");
+            }
+            if (square.illuminated) {
+                newElem.classList.add("illuminated");
+            }
+            if (square.isLight) {
+                newElem.classList.add("bulb");
+            }
+            newRow.appendChild(newElem);
+        });
+        result.appendChild(newRow);
+    });
+    matrix = [];
 };
 
 const submit = async () => {
     const data = makePayload();
-
     const payload = await JSON.stringify(data);
 
     fetch("http://localhost:3001/matrix", {
         method: "POST",
-
         headers: {
             "Content-Type": "application/json",
         },
@@ -96,8 +136,7 @@ const submit = async () => {
             return resp.json();
         })
         .then((respOk) => {
-            console.log(respOk);
-            payloadToRows(respOk);
+            displaySolution(respOk);
         })
         .catch((error) => {
             console.log(error);
