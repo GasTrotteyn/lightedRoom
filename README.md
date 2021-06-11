@@ -1,5 +1,5 @@
 # lightedRoom
-1 -  git clone: https://github.com/GasTrotteyn/lightedRoom.git
+1 -  clone repository.
 
 2 - cd lightedRoom.
 
