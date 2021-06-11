@@ -24,14 +24,15 @@ const extractCoord = (data) => {
             column: column,
             isWall: value,
             isLight: false,
-            iluminated: false,
+            illuminated: false,
         };
         extracted.push(newItem);
     });
+
     return extracted;
 };
 
-//put ligths (not allowed on walls) - lights is an Array of objects like this one: {row:0, column: 2} //
+//put ligths (not allowed on walls) //
 
 const putLights = (data, lights) => {
     let withLights = [...data];
@@ -72,96 +73,88 @@ const turnOnLights = (data) => {
     let lightedRoom = [...data];
     lightedRoom.map((item) => {
         if (item.isLight) {
-            //TRAER LA ROW EN LA QUE ESTÁ LA LUZ Y ENCONTRAR SU POSICIÓN EN ELLA ///
+            //get the row which has the light and find the light position ///
             let row = getRowOfLight(lightedRoom, item);
             let i = item.column;
 
-            //ENCENDER LA LUZ HACIA LA DERECHA HASTA ENCONTRAR PARED O QUE SE TERMINE LA ROW///
-
+            //turn the light to the right untill find a wall or the end of row///
             while (i < row.length && !row[i].isWall) {
                 //console.log("uno iluminado a la derecha");
-                row[i].iluminated = true;
+                row[i].illuminated = true;
                 i++;
             }
 
-            //VOLVER A ENCONTRAR LA POSICIÓN Y ENCENDER LA LUZ HACIA LA IZQUIERDA HASTA ENCONTRAR PARED O QUE SE TERMINE LA ROW///
+            //find the position again and turn the light to the left untill find a wall or the end of row ///
             let i2 = item.column;
-
             while (i2 >= 0 && !row[i2].isWall) {
-                //console.log("uno iluminado a la izquierda");
-                row[i2].iluminated = true;
+                row[i2].illuminated = true;
                 i2 = i2 - 1;
             }
-            //ACTUALIZAR EL VALOR DE LIGTED EN CADA CELDA EN MATRIZ//
+
+            //update the value of illuminated in each square of the matrix //
             row.map((elem) => {
                 lightedRoom.map((square) => {
                     if (
                         square.row == elem.row &&
                         square.column == elem.column
                     ) {
-                        //console.log("una celda cargada en matrix!");
-                        square.iluminated = elem.iluminated;
+                        square.illuminated = elem.illuminated;
                     }
                 });
             });
 
-            //TRAER LA COLUMNA EN LA QUE ESTÁ LA LUZ Y SU POSICIÓN EN ELLA  //
+            //get the column which has the light and find the light position  //
             let column = getColumnOfLight(lightedRoom, item);
             let i3 = item.row;
 
-            //ENCENDER LA LUZ HACIA LA ABAJO HASTA ENCONTRAR PARED O QUE SE TERMINE LA COLUMN///
+            //turn the light (down direction) untill find a wall or the end of row///
             while (i3 < column.length && !column[i3].isWall) {
-                //console.log("uno iluminado abajo");
-                column[i3].iluminated = true;
+                column[i3].illuminated = true;
                 i3++;
             }
 
-            //VOLVER A ENCONTRAR LA POSICIÓN Y ENCENDER LA LUZ HACIA LA IZQUIERDA HASTA ENCONTRAR PARED O QUE SE TERMINE LA ROW///
+            //find the position again and turn the light (up direction) untill find a wall or the end of row ///
             let i4 = item.row;
-
             while (i4 >= 0 && !column[i4].isWall) {
-                //console.log("uno iluminado arriba");
-                column[i4].iluminated = true;
+                column[i4].illuminated = true;
                 i4 = i4 - 1;
             }
 
-            //ACTUALIZAR EL VALOR DE LIGTED EN CADA CELDA EN MATRIZ//
+            //update the value of illuminated in each square of the matrix//
             column.map((elem) => {
                 lightedRoom.map((square) => {
                     if (
                         square.row == elem.row &&
                         square.column == elem.column
                     ) {
-                        //console.log("una celda cargada en matrix!");
-                        square.iluminated = elem.iluminated;
+                        square.illuminated = elem.illuminated;
                     }
                 });
             });
         }
     });
-    //console.log(lightedRoom);
+
     return lightedRoom;
 };
 
 const isFullyIluminated = (data) => {
     let result = true;
     data.map((square) => {
-        if (!square.iluminated && !square.isWall) {
+        if (!square.illuminated && !square.isWall) {
             result = false;
         }
     });
-    //console.log("room fully lighted: " + result);
+
     return result;
 };
 
 const searchFirstDark = (data) => {
     let dark = {};
     data.map((square) => {
-        if (!square.iluminated && !square.isWall && !dark.row) {
+        if (!square.illuminated && !square.isWall && !dark.row) {
             dark = square;
         }
     });
-    //console.log("el primer oscuro es: " + dark.row + dark.column);
 
     return dark;
 };
@@ -170,43 +163,25 @@ const smartLight = (data) => {
     let result = [...data];
     let finished = false;
     while (!finished) {
-        ///prueba///
-        result = result.reverse();
-        ////prueba///
+        ///this line makes the search start at the end or beginning of the array each time.///
+        // result = result.reverse();
+
         let dark = [searchFirstDark(result)];
         let roomWithBulbs = putLights(result, dark);
         let roomIluminated = turnOnLights(roomWithBulbs);
         finished = isFullyIluminated(roomIluminated);
     }
     let final = [...result];
-    //console.log(final[0].row);
     if (final[0].row != 0) {
         final = final.reverse();
     }
-    //console.log(final[0].row);
+
     return final;
 };
 
-let lightsArray = [
-    //{ row: 0, column: 0 },
-    //{ row: 1, column: 1 },
-    //{ row: 1, column: 4 },
-    // { row: 3, column: 3 },
-    // { row: 4, column: 4 },
-    // { row: 5, column: 5 },
-    //{ row: 6, column: 6 },
-    // { row: 1, column: 5 },
-    // { row: 5, column: 1 },
-];
-//let lightItem = { row: 0, column: 0 };
 app.post("/matrix", (req, res) => {
     const matriz = req.body;
     const roomWithWalls = extractCoord(matriz.data);
-    //const roomWithLightsAndWalls = putLights(roomWithWalls, lightsArray);
-    //const lightedRoom = turnOnLights(roomWithLightsAndWalls);
-    //const fully = isFullyIluminated(lightedRoom);
-    //const oscurito = searchDark(lightedRoom);
-
     const result = smartLight(roomWithWalls);
 
     res.status(201);
