@@ -1,5 +1,5 @@
 # lightedRoom
-1 -  clone repository.
+1 -  clone repository: https://github.com/GasTrotteyn/lightedRoom.git
 
 2 - cd lightedRoom.
 
@@ -7,4 +7,4 @@
 
 4 - Open server.js in VSC and run node server.js in a new terminal.
 
-5 - open Front-end folder in other VSC and run it with Go-Live
+5 - Open Front-end folder in other VSC and run it with Go-Live.
