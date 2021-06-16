@@ -123,6 +123,7 @@ const displaySolution = (resp) => {
 
 const submit = async () => {
     const data = makePayload();
+    console.log(data);
     const payload = await JSON.stringify(data);
 
     fetch("http://localhost:3001/matrix", {
