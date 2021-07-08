@@ -17,8 +17,8 @@ const extractCoord = (data) => {
     let extracted = [];
     data.map((item) => {
         if (item.coord.length === 3) {
-            let row = item.coord.charAt(0);
-            let column = item.coord.charAt(2);
+            let row = parseInt(item.coord.charAt(0));
+            let column = parseInt(item.coord.charAt(2));
             let value = item.value;
             let newItem = {
                 row: row,
@@ -36,8 +36,8 @@ const extractCoord = (data) => {
                 let row1 = item.coord.charAt(1);
                 array.push(row0);
                 array.push(row1);
-                let row = array.join("");
-                let column = item.coord.charAt(3);
+                let row = parseInt(array.join(""));
+                let column = parseInt(item.coord.charAt(3));
                 let value = item.value;
                 let newItem = {
                     row: row,
@@ -54,8 +54,8 @@ const extractCoord = (data) => {
                 let col2 = item.coord.charAt(3);
                 array.push(col1);
                 array.push(col2);
-                let column = array.join("");
-                let row = item.coord.charAt(0);
+                let column = parseInt(array.join(""));
+                let row = parseInt(item.coord.charAt(0));
                 let value = item.value;
                 let newItem = {
                     row: row,
@@ -72,13 +72,13 @@ const extractCoord = (data) => {
             let row1 = item.coord.charAt(1);
             array.push(row0);
             array.push(row1);
-            let row = array.join("");
+            let row = parseInt(array.join(""));
             let array2 = [];
             let col1 = item.coord.charAt(3);
             let col2 = item.coord.charAt(4);
             array2.push(col1);
             array2.push(col2);
-            let column = array2.join("");
+            let column = parseInt(array2.join(""));
             let value = item.value;
             let newItem = {
                 row: row,
@@ -96,19 +96,18 @@ const extractCoord = (data) => {
 
 //put ligths (not allowed on walls) //
 
-const putLights = (data, lights) => {
+const putLights = (data, dark) => {
     let withLights = [...data];
-    lights.map((light) => {
-        withLights.map((square) => {
-            if (
-                light.row == square.row &&
-                light.column == square.column &&
-                !square.isWall
-            ) {
-                square.isLight = true;
-            }
-        });
-    });
+    for (let i = 0; i < withLights.length; i++) {
+        if (
+            dark.row == withLights[i].row &&
+            dark.column == withLights[i].column &&
+            !withLights[i].isWall
+        ) {
+            withLights[i].isLight = true;
+            break;
+        }
+    }
 
     return withLights;
 };
@@ -133,10 +132,7 @@ const getColumnOfLight = (data, item) => {
 
 const turnOnLights = (data) => {
     let lightedRoom = [...data];
-    // if (lightedRoom[0].row !== 0) {
-    //     lightedRoom.reverse();
-    //     console.log("reversiando");
-    // }
+
     lightedRoom.map((item) => {
         if (item.isLight) {
             //get the row which has the light and find the light position ///
@@ -206,7 +202,7 @@ const turnOnLights = (data) => {
 
 const isFullyIluminated = (data) => {
     let result = true;
-    data.map((square) => {
+    data.forEach((square) => {
         if (!square.illuminated && !square.isWall) {
             result = false;
         }
@@ -217,39 +213,47 @@ const isFullyIluminated = (data) => {
 
 const searchFirstDark = (data) => {
     let dark = {};
-    data.map((square) => {
-        if (!square.illuminated && !square.isWall && !dark.row) {
-            dark = square;
+    for (let i = 0; i < data.length; i++) {
+        if (!data[i].illuminated && !data[i].isWall) {
+            dark = data[i];
+            break;
         }
-    });
+    }
 
     return dark;
 };
 
 const smartLight = (data) => {
+    let reverseThisTime = false;
     let result = [...data];
     let finished = false;
     while (!finished) {
-        ///this line makes the search start at the end or beginning of the array each time.///
-        //result = result.reverse();
+        if (reverseThisTime) {
+            result.reverse();
+        } else {
+            reverseThisTime = true;
+        }
+        let dark = searchFirstDark(result);
+        if (result[0].row != 0) {
+            result.reverse();
+        }
 
-        let dark = [searchFirstDark(result)];
         let roomWithBulbs = putLights(result, dark);
         let roomIluminated = turnOnLights(roomWithBulbs);
+        result = roomIluminated;
         finished = isFullyIluminated(roomIluminated);
     }
     let final = [...result];
     if (final[0].row != 0) {
         final = final.reverse();
     }
-
+    console.log("full illuminated!!");
     return final;
 };
 
 app.post("/matrix", (req, res) => {
     const matriz = req.body;
     const roomWithWalls = extractCoord(matriz.data);
-
     const result = smartLight(roomWithWalls);
 
     res.status(201);
